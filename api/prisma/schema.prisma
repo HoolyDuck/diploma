@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id           Int           @id @default(autoincrement())
+  categoryName String        @unique
+  AppCategory  AppCategory[]
+}
+
+model Media {
+  id          Int           @id @default(autoincrement())
+  mediaUrl    String        @unique
+  AppMedia    AppMedia[]
+  Application Application[]
+}
+
+model Application {
+  id              Int  @id @default(autoincrement())
+  userId          Int
+  activeVersionId Int? @unique
+  iconMediaId     Int?
+
+  title       String
+  description String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  publishedAt DateTime?
+  type        ApplicationType
+  status      ApplicationStatus?
+  websiteUrl  String?
+
+  versions          Version[]           @relation("ApplicationVersion")
+  activeVersion     Version?            @relation("ActiveVersion", fields: [activeVersionId], references: [id])
+  iconMedia         Media?              @relation(fields: [iconMediaId], references: [id])
+  reviews           Review[]
+  ApplicationReport ApplicationReport[]
+  AppCategory       AppCategory[]
+  AppMedia          AppMedia[]
+}
+
+model Version {
+  id            Int           @id @default(autoincrement())
+  applicationId Int
+  versionName   String
+  fileId        String?       
+  status        VersionStatus @default(DRAFT)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  application       Application  @relation("ApplicationVersion", fields: [applicationId], references: [id])
+  activeApplication Application? @relation("ActiveVersion")
+}
+
+model Review {
+  id            Int @id @default(autoincrement())
+  userId        Int
+  applicationId Int
+
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  application  Application    @relation(fields: [applicationId], references: [id])
+  ReviewReport ReviewReport[]
+}
+
+model ReviewReport {
+  id        Int      @id @default(autoincrement())
+  reviewId  Int
+  userId    Int
+  reason    String
+  createdAt DateTime @default(now())
+
+  review Review @relation(fields: [reviewId], references: [id])
+}
+
+model ApplicationReport {
+  id            Int      @id @default(autoincrement())
+  applicationId Int
+  userId        Int
+  reason        String
+  createdAt     DateTime @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id])
+}
+
+model AppCategory {
+  id            Int @id @default(autoincrement())
+  applicationId Int
+  categoryId    Int
+
+  application Application @relation(fields: [applicationId], references: [id])
+  category    Category    @relation(fields: [categoryId], references: [id])
+
+  @@unique([applicationId, categoryId])
+}
+
+model AppMedia {
+  id            Int @id @default(autoincrement())
+  applicationId Int
+  mediaId       Int
+
+  application Application @relation(fields: [applicationId], references: [id])
+  media       Media       @relation(fields: [mediaId], references: [id])
+
+  @@unique([applicationId, mediaId])
+}
+
+enum ApplicationType {
+  WEB
+  DESKTOP
+}
+
+enum ApplicationStatus {
+  DRAFT
+  PUBLISHED
+  IN_REVIEW
+  REJECTED
+  HIDDEN
+}
+
+enum VersionStatus {
+  DRAFT
+  IN_REVIEW
+  PUBLISHED
+  REJECTED
+}

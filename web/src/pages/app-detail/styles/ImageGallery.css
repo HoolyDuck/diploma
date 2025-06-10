@@ -1,0 +1,14 @@
+.image-gallery-image {
+  width: 100% !important;
+  height: auto !important;
+  max-height: 400px !important;
+  overflow: hidden !important;
+}
+
+.fullscreen .image-gallery-image {
+  max-height: 100vh !important;
+}
+
+.image-gallery-bullet {
+  padding: 3px !important;
+}

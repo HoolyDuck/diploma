@@ -1,0 +1,77 @@
+import { Button } from "@/components/ui/button";
+import { mockAppDetail } from "@/lib/mocks";
+import { CheckIcon, DownloadIcon, Star } from "lucide-react";
+
+const approved = true; // Mocked variable to indicate if the app is approved
+
+export const AppPublishPage = () => {
+  if (!approved)
+    return (
+      <div className="flex flex-col gap-4 p-6">
+        <h1 className="text-2xl font-bold">Публікація</h1>
+        <div>
+          <p>
+            Публікація застосунку дозволяє вам зробити його доступним для
+            користувачів.
+          </p>
+          <p>Для публікації застосунку потрібно виконати наступні кроки:</p>
+          <div className="flex flex-col gap-2 mt-4">
+            <div className="flex items-center gap-2 ">
+              <CheckIcon className="inline size-4 text-green-500" />
+              <span className="text-gray-700 text-sm">
+                Заповнити інформацію про застосунок
+              </span>
+            </div>
+            <div className="flex items-center gap-2 ">
+              <CheckIcon className="inline size-4 text-green-500" />
+              <span className="text-gray-700 text-sm">
+                Отримати підтвердження на файл версії
+              </span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <Button variant="outline">Попередній перегляд</Button>
+          <Button className="ml-2">Подати на публікацію</Button>
+        </div>
+        <div>
+          <h2 className="text-lg font-semibold">
+            Статус підтвердження публікації:{" "}
+            <span className="text-gray-500">Не розглянуто</span>
+          </h2>
+        </div>
+      </div>
+    );
+
+  return (
+    <div className="flex flex-col gap-2 p-6">
+      <h1 className="text-2xl font-bold">Публікація</h1>
+
+      <h2 className="text-lg font-semibold">{mockAppDetail.title}</h2>
+
+      <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <DownloadIcon className="inline size-4" />
+          <span className="text-gray-700 text-sm">
+            Завантаження: <span className="font-semibold">0</span>
+          </span>
+        </div>
+        <div className="flex gap-2 items-center">
+          <Star className="inline size-4 text-yellow-500" />
+          <span className="text-gray-700 text-sm">
+            Рейтинг: <span className="font-semibold">0.0</span>
+          </span>
+        </div>
+      </div>
+      <div className="flex flex-col gap-4">
+        <h2>
+          Стан публікації:{" "}
+          <span className="text-green-500 font-semibold">Опубліковано</span>
+        </h2>
+        <div>
+          <Button>Перейти на сторінку застосунку</Button>
+        </div>
+      </div>
+    </div>
+  );
+};

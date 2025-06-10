@@ -1,0 +1,94 @@
+import {
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
+import { JwtGuard } from './guards/jwt.guard';
+import { GetUser } from './decorators/get-user.decorator';
+
+type FindManyParams = {
+  skip?: number;
+  take?: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+};
+
+@Controller('application')
+export class ApplicationController {
+  constructor(
+    @Inject('API_SERVICE') private readonly apiServiceClient: ClientProxy,
+  ) {}
+
+  @Get('findById/:id')
+  async findById(id: number) {
+    return firstValueFrom(
+      this.apiServiceClient.send('applications.findById', id),
+    );
+  }
+
+  @Get('findForDeveloper')
+  @UseGuards(JwtGuard)
+  async findForDeveloper(@GetUser() user: { id: number }) {
+    return firstValueFrom(
+      this.apiServiceClient.send('applications.findByDeveloperId', user.id),
+    );
+  }
+
+  @Get('findByIdForDeveloper/:id')
+  async findByIdForDeveloper(@Param('id') id: number) {
+    return firstValueFrom(
+      this.apiServiceClient.send('applications.findByIdForDeveloper', id),
+    );
+  }
+
+  @Get('findMany')
+  async findMany(
+    @Query('skip') skip?: string,
+    @Query('take') take?: string,
+    @Query('search') search?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+    @Query('categoryId') categoryId?: number,
+  ) {
+    console.log('findMany called with params:', {
+      skip,
+      take,
+      search,
+      sortBy,
+      sortOrder,
+    });
+    const result = await firstValueFrom(
+      this.apiServiceClient.send('applications.findMany', {
+        skip: skip ? +skip : undefined,
+        take: take ? +take : undefined,
+        search,
+        sortBy,
+        sortOrder,
+      }),
+    );
+
+    return result;
+  }
+
+  @Post('')
+  @UseGuards(JwtGuard)
+  async createApplication(
+    @Body() createApplicationDto: any,
+    @GetUser() user: { id: number },
+  ) {
+    return firstValueFrom(
+      this.apiServiceClient.send('applications.create', {
+        ...createApplicationDto,
+        userId: user.id,
+      }),
+    );
+  }
+}
