@@ -12,4 +12,11 @@ export class UsersController {
   async getUserById(@Payload() { id }: { id: number }): Promise<UserDto> {
     return this.usersService.findById(id);
   }
+
+  @MessagePattern('users.getManyByIds')
+  async getUsersByIds(
+    @Payload() { ids }: { ids: number[] },
+  ): Promise<Omit<UserDto, 'password'>[]> {
+    return this.usersService.findManyByIds(ids);
+  }
 }

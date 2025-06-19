@@ -1,10 +1,53 @@
 import { Button } from "@/components/ui/button";
+import {
+  useGetApplicationByIdQuery,
+  useUpdateApplicationMutation,
+} from "@/lib/api/api";
 import { mockAppDetail } from "@/lib/mocks";
 import { CheckIcon, DownloadIcon, Star } from "lucide-react";
+import { useNavigate, useParams } from "react-router";
+import { toast } from "sonner";
 
-const approved = true; // Mocked variable to indicate if the app is approved
+const statusMap: Record<string, string> = {
+  PUBLISHED: "Підтверджено",
+  IN_REVIEW: "На розгляді",
+  DRAFT: "Ще не розглянуто",
+};
 
 export const AppPublishPage = () => {
+  const { appId } = useParams<{ appId: string }>();
+
+  const { data: appSettings, isLoading: isLoadingAppSettings } =
+    useGetApplicationByIdQuery(Number(appId), {
+      skip: !appId,
+      refetchOnFocus: true,
+    });
+
+  const [updateApplicationMutation] = useUpdateApplicationMutation();
+
+  const approved = appSettings?.status === "PUBLISHED";
+  const navigate = useNavigate();
+
+  const handleSentForReview = async () => {
+    if (!appId) return;
+
+    try {
+      await updateApplicationMutation({
+        id: Number(appId),
+        updateApplicationDto: {
+          status: "IN_REVIEW",
+        },
+      }).unwrap();
+      toast.success(
+        "Застосунок успішно відправлено на розгляд. Очікуйте підтвердження."
+      );
+    } catch {
+      toast.error(
+        "Сталася помилка при відправці на розгляд. Спробуйте ще раз."
+      );
+    }
+  };
+
   if (!approved)
     return (
       <div className="flex flex-col gap-4 p-6">
@@ -31,13 +74,26 @@ export const AppPublishPage = () => {
           </div>
         </div>
         <div>
-          <Button variant="outline">Попередній перегляд</Button>
-          <Button className="ml-2">Подати на публікацію</Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/apps/${appId}`)}
+          >
+            Попередній перегляд
+          </Button>
+          <Button
+            className="ml-2"
+            onClick={handleSentForReview}
+            disabled={appSettings?.status === "IN_REVIEW"}
+          >
+            Подати на публікацію
+          </Button>
         </div>
         <div>
           <h2 className="text-lg font-semibold">
             Статус підтвердження публікації:{" "}
-            <span className="text-gray-500">Не розглянуто</span>
+            <span className="text-gray-500">
+              {statusMap[appSettings?.status]}
+            </span>
           </h2>
         </div>
       </div>
@@ -47,7 +103,7 @@ export const AppPublishPage = () => {
     <div className="flex flex-col gap-2 p-6">
       <h1 className="text-2xl font-bold">Публікація</h1>
 
-      <h2 className="text-lg font-semibold">{mockAppDetail.title}</h2>
+      <h2 className="text-lg font-semibold">{appSettings.title}</h2>
 
       <div className="flex gap-2">
         <div className="flex gap-2 items-center">

@@ -2,56 +2,45 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateApplicationDto } from './dto/create-application.dto';
+import { mapToApplicationDto } from './mappers/applications.mapper';
+
+const includeOptions: Prisma.ApplicationInclude = {
+  iconMedia: true,
+  activeVersion: true,
+  AppCategory: {
+    include: {
+      category: true,
+    },
+  },
+  reviews: true,
+  AppMedia: {
+    include: {
+      media: true,
+    },
+  },
+  AppDownload: true,
+};
 
 @Injectable()
 export class ApplicationsService {
   constructor(private prisma: PrismaService) {}
 
   async findById(id: number) {
-    const result = this.prisma.application.findUnique({
+    const result = await this.prisma.application.findUnique({
       where: { id },
-      include: {
-        iconMedia: true,
-        activeVersion: true,
-        AppCategory: {
-          include: {
-            category: true,
-          },
-        },
-        reviews: true,
-      },
+      include: includeOptions,
     });
 
-    return result;
-  }
-
-  async findByIdForDeveloper(id: number) {
-    const result = this.prisma.application.findUnique({
-      where: { id },
-      include: {
-        iconMedia: true,
-        activeVersion: true,
-        AppCategory: {
-          include: {
-            category: true,
-          },
-        },
-        versions: true,
-      },
-    });
-
-    return result;
+    return mapToApplicationDto(result);
   }
 
   async findByUserId(userId: number) {
-    const result = this.prisma.application.findMany({
+    const result = await this.prisma.application.findMany({
       where: { userId },
-      include: {
-        iconMedia: true,
-      },
+      include: includeOptions,
     });
 
-    return result;
+    return result.map(mapToApplicationDto);
   }
 
   async findMany(
@@ -60,6 +49,7 @@ export class ApplicationsService {
     search?: string,
     sortBy?: string,
     sortOrder?: 'asc' | 'desc',
+    categoryId?: number,
   ) {
     const where: Prisma.ApplicationWhereInput = search
       ? {
@@ -67,6 +57,13 @@ export class ApplicationsService {
             startsWith: search,
             mode: 'insensitive',
           },
+          ...(categoryId && {
+            AppCategory: {
+              some: {
+                categoryId,
+              },
+            },
+          }),
         }
       : {};
 
@@ -81,40 +78,23 @@ export class ApplicationsService {
       take,
       where,
       orderBy,
-      include: {
-        iconMedia: true,
-        activeVersion: true,
-      },
+      include: includeOptions,
     });
 
     console.log('findMany', result);
 
-    return result;
+    return result.map(mapToApplicationDto);
   }
 
   async findByDeveloperId(developerId: number, skip?: number, take?: number) {
     const result = await this.prisma.application.findMany({
       where: { userId: developerId },
-      include: {
-        iconMedia: true,
-        activeVersion: true,
-      },
+      include: includeOptions,
       skip,
       take,
     });
 
-    return result;
-  }
-
-  async getReviews(applicationId: number) {
-    const reviews = await this.prisma.review.findMany({
-      where: { applicationId },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-
-    return reviews;
+    return result.map(mapToApplicationDto);
   }
 
   async createApplication(data: CreateApplicationDto) {
@@ -124,6 +104,7 @@ export class ApplicationsService {
         title: data.title,
         type: data.type,
       },
+      include: includeOptions,
     });
 
     return newApplication;
@@ -133,8 +114,42 @@ export class ApplicationsService {
     const updatedApplication = await this.prisma.application.update({
       where: { id },
       data,
+      include: includeOptions,
     });
 
     return updatedApplication;
+  }
+
+  async updateAppCategories(
+    applicationId: number,
+    categories: { id: number }[],
+  ) {
+    const result = this.prisma.$transaction(async (prisma) => {
+      const result = await prisma.appCategory.deleteMany({
+        where: { applicationId },
+      });
+
+      const appCategories = categories.map((category) => ({
+        applicationId,
+        categoryId: category.id,
+      }));
+
+      return prisma.appCategory.createMany({
+        data: appCategories,
+      });
+    });
+
+    return result;
+  }
+
+  async createAppDownload(applicationId: number, userId: number) {
+    const newAppDownload = await this.prisma.appDownload.create({
+      data: {
+        applicationId,
+        userId,
+      },
+    });
+
+    return newAppDownload;
   }
 }

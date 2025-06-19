@@ -4,6 +4,7 @@ import {
   Get,
   Inject,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -28,9 +29,9 @@ export class ApplicationController {
   ) {}
 
   @Get('findById/:id')
-  async findById(id: number) {
+  async findById(@Param('id') id: number) {
     return firstValueFrom(
-      this.apiServiceClient.send('applications.findById', id),
+      this.apiServiceClient.send('applications.findById', +id),
     );
   }
 
@@ -88,6 +89,72 @@ export class ApplicationController {
       this.apiServiceClient.send('applications.create', {
         ...createApplicationDto,
         userId: user.id,
+      }),
+    );
+  }
+
+  @Patch('update/:id')
+  @UseGuards(JwtGuard)
+  async updateApplication(
+    @Param('id') id: number,
+    @Body() updateApplicationDto: any,
+  ) {
+    return firstValueFrom(
+      this.apiServiceClient.send('applications.update', {
+        id: +id,
+        updateApplicationDto,
+      }),
+    );
+  }
+
+  @Get('reviews/:id')
+  async getReviews(@Param('id') id: number) {
+    return firstValueFrom(
+      this.apiServiceClient.send('review.getReviewsByAppId', +id),
+    );
+  }
+
+  @Post('createReview/:id')
+  @UseGuards(JwtGuard)
+  async createReview(
+    @Param('id') id: number,
+    @Body() createReviewDto: { rating: number; comment: string },
+    @GetUser() user: { id: number },
+  ) {
+    return firstValueFrom(
+      this.apiServiceClient.send('review.createReview', {
+        appId: +id,
+        userId: user.id,
+        ...createReviewDto,
+      }),
+    );
+  }
+
+  @Patch('updateInfo/:id')
+  @UseGuards(JwtGuard)
+  async updateApplicationInfo(
+    @Param('id') id: number,
+    @Body()
+    updateApplicationDto: {
+      title: string;
+      description: string;
+      categories: { id: number }[];
+    },
+  ) {
+    await firstValueFrom(
+      this.apiServiceClient.send('applications.updateCategories', {
+        id: +id,
+        categories: updateApplicationDto.categories,
+      }),
+    );
+
+    return firstValueFrom(
+      this.apiServiceClient.send('applications.update', {
+        id: +id,
+        updateApplicationDto: {
+          title: updateApplicationDto.title,
+          description: updateApplicationDto.description,
+        },
       }),
     );
   }

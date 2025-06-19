@@ -19,6 +19,19 @@ export class UsersService {
     });
   }
 
+  async findManyByIds(ids: number[]): Promise<Omit<UserDto, 'password'>[]> {
+    return this.prisma.user.findMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+      omit: {
+        password: true, // Exclude password from the result
+      },
+    });
+  }
+
   async create(
     email: string,
     password: string,

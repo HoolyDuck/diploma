@@ -13,7 +13,10 @@ import { Separator } from "@/components/ui/separator";
 import { useUploadFile } from "@/hooks/useUploadFile";
 import {
   useCreateVersionMutation,
+  useGetApplicationByIdQuery,
   useGetAppVersionsQuery,
+  useSendVersionForReviewMutation,
+  useSetActiveVersionMutation,
 } from "@/lib/api/api";
 import { Lock } from "lucide-react";
 import { useState } from "react";
@@ -45,14 +48,19 @@ const versionsMock = [
 const statusMap: Record<string, string> = {
   PUBLISHED: "Підтверджено",
   IN_REVIEW: "На розгляді",
-  NO_REVIEW: "Ще не розглянуто",
+  DRAFT: "Ще не розглянуто",
 };
 
 const VersionCard: React.FC<{ version: typeof activeVersion }> = ({
   version,
 }) => {
+  const { appId } = useParams<{ appId: string }>();
   const [isUpdateFile, setIsUpdateFile] = useState(false);
-  const { uploadFile } = useUploadFile();
+  const { uploadVersionFile } = useUploadFile();
+  const [sendVersionForReviewMutation, { isLoading: isSendingReview }] =
+    useSendVersionForReviewMutation();
+  const [setActiveVersionMutation, { isLoading: isSettingActiveVersion }] =
+    useSetActiveVersionMutation();
 
   const handleFileUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -65,23 +73,39 @@ const VersionCard: React.FC<{ version: typeof activeVersion }> = ({
     }
 
     try {
-      const response = await uploadFile(
-        file,
-        `version/uploadFile/${version.id}`
-      );
-      toast.success("File uploaded successfully");
-      console.log("File upload response:", response);
+      await uploadVersionFile(file, version.id);
+      toast.success("Файл успішно завантажено");
       setIsUpdateFile(false);
-    } catch (error) {
-      toast.error("Failed to upload file. Please try again.");
-      console.error("File upload error:", error);
+    } catch {
+      toast.error("Помилка при завантаженні файлу. Спробуйте ще раз.");
+    }
+  };
+
+  const handleSendForReview = async () => {
+    try {
+      await sendVersionForReviewMutation(version.id).unwrap();
+      toast.success("Версію відправлено на розгляд");
+    } catch {
+      toast.error("Не вдалося відправити версію на розгляд. Спробуйте ще раз.");
+    }
+  };
+
+  const handleSetActiveVersion = async () => {
+    try {
+      await setActiveVersionMutation({
+        appId: Number(appId),
+        versionId: version.id,
+      }).unwrap();
+      toast.success("Версію встановлено активною");
+    } catch {
+      toast.error("Не вдалося встановити версію активною. Спробуйте ще раз.");
     }
   };
 
   return (
     <div className="p-4 border rounded-md flex items-center justify-between">
       <div className="flex flex-col">
-        <h3 className="text-lg font-semibold">{version.version}</h3>
+        <h3 className="text-lg font-semibold">{version.versionName}</h3>
         <p className="text-sm text-muted-foreground">
           Створена: {new Date(version.createdAt).toLocaleDateString()}
         </p>
@@ -119,10 +143,13 @@ const VersionCard: React.FC<{ version: typeof activeVersion }> = ({
               </Label>
               <div>
                 <div className="flex items-center ">
-                  <p className="text-sm text-muted-foreground">app.zip</p>
+                  <p className="text-sm text-muted-foreground">
+                    {version.file?.originalName || "Файл не завантажено"}
+                  </p>
                   <Button
                     variant="link"
                     className="text-sm"
+                    disabled={version.status !== "DRAFT"}
                     onClick={() => setIsUpdateFile(!isUpdateFile)}
                   >
                     {isUpdateFile ? "Скасувати" : "Оновити файл"}
@@ -145,8 +172,16 @@ const VersionCard: React.FC<{ version: typeof activeVersion }> = ({
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline">Відправити на розгляд</Button>
-            <Button disabled>
+            <Button
+              variant="outline"
+              onClick={handleSendForReview}
+            >
+              Відправити на розгляд
+            </Button>
+            <Button
+              onClick={handleSetActiveVersion}
+              disabled={isSettingActiveVersion}
+            >
               <Lock /> Встановити активною
             </Button>
           </DialogFooter>
@@ -159,6 +194,12 @@ const VersionCard: React.FC<{ version: typeof activeVersion }> = ({
 export const AppSettingsVersions = () => {
   const { appId } = useParams<{ appId: string }>();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
+  console.log("App ID:", appId);
+
+  const { data: appSettings } = useGetApplicationByIdQuery(Number(appId), {
+    skip: !appId,
+  });
 
   const { data: versions, isLoading } = useGetAppVersionsQuery(Number(appId));
   const [createVersionMutation, { isLoading: isCreateVersionLoading }] =
@@ -227,10 +268,12 @@ export const AppSettingsVersions = () => {
       </Dialog>
       <Separator />
       <h3 className="text-lg font-semibold">Активна версія</h3>
-      <VersionCard version={activeVersion} />
+      {appSettings?.activeVersion && (
+        <VersionCard version={appSettings.activeVersion} />
+      )}
       <h3 className="text-lg font-semibold">Історія</h3>
       <ul className="space-y-2">
-        {versionsMock?.map((version) => (
+        {versions?.map((version) => (
           <li key={version.id}>
             <VersionCard version={version} />
           </li>

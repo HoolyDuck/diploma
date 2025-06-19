@@ -65,6 +65,8 @@ export const api = createApi({
     "DeveloperApplications",
     "DeveloperApplicationById",
     "Versions",
+    "Categories",
+    "Reviews",
   ],
   endpoints: (builder) => ({
     login: builder.mutation<LoginResponse, LoginRequest>({
@@ -97,12 +99,19 @@ export const api = createApi({
         }
       },
     }),
+    getCategories: builder.query({
+      query: () => ({
+        url: "/categories/findAll",
+        method: "GET",
+      }),
+      providesTags: ["Categories"],
+    }),
     getApplications: builder.query<Application[], SearchApplicationDto>({
       query: (params) => ({
         url: "/application/findMany",
         method: "GET",
         params: {
-          take: 10,
+          take: params.take || 10,
           search: params.search,
           categoryId: params.categoryId,
           sortBy: "createdAt",
@@ -117,9 +126,9 @@ export const api = createApi({
       }),
       providesTags: ["DeveloperApplications"],
     }),
-    getApplicationByIdForDeveloper: builder.query({
+    getApplicationById: builder.query({
       query: (id: number) => ({
-        url: `/application/findByIdForDeveloper/${id}`,
+        url: `/application/findById/${id}`,
         method: "GET",
       }),
       providesTags: ["DeveloperApplicationById"],
@@ -131,6 +140,22 @@ export const api = createApi({
         body: data,
       }),
       invalidatesTags: ["Applications"],
+    }),
+    updateApplication: builder.mutation({
+      query: ({ id, updateApplicationDto }) => ({
+        url: `/application/update/${id}`,
+        method: "PATCH",
+        body: updateApplicationDto,
+      }),
+      invalidatesTags: ["DeveloperApplicationById", "Applications"],
+    }),
+    updateApplicationInfo: builder.mutation({
+      query: ({ id, updateApplicationDto }) => ({
+        url: `/application/updateInfo/${id}`,
+        method: "PATCH",
+        body: updateApplicationDto,
+      }),
+      invalidatesTags: ["DeveloperApplicationById", "Applications"],
     }),
     getAppVersions: builder.query({
       query: (appId: number) => ({
@@ -147,6 +172,42 @@ export const api = createApi({
       }),
       invalidatesTags: ["Versions"],
     }),
+    sendVersionForReview: builder.mutation({
+      query: (versionId: number) => ({
+        url: `/version/sendForReview/${versionId}`,
+        method: "PATCH",
+      }),
+      invalidatesTags: ["Versions"],
+    }),
+    setActiveVersion: builder.mutation({
+      query: ({ versionId, appId }) => ({
+        url: `/version/setAsActive/${versionId}`,
+        method: "PATCH",
+        body: { appId },
+      }),
+      invalidatesTags: ["DeveloperApplicationById", "Applications"],
+    }),
+    getAppReviews: builder.query({
+      query: (appId: number) => ({
+        url: `/application/reviews/${appId}`,
+        method: "GET",
+      }),
+      providesTags: ["Reviews"],
+    }),
+    createReview: builder.mutation({
+      query: ({ appId, rating, comment }) => ({
+        url: `/application/createReview/${appId}`,
+        method: "POST",
+        body: { rating, comment },
+      }),
+      invalidatesTags: ["Reviews", "DeveloperApplicationById"],
+    }),
+    getFileSignature: builder.query({
+      query: () => ({
+        url: "/files/generateFileSignature",
+        method: "GET",
+      }),
+    }),
   }),
 });
 
@@ -154,10 +215,18 @@ export const {
   useLoginMutation,
   useRegisterMutation,
   useGetMeQuery,
+  useGetCategoriesQuery,
   useGetApplicationsQuery,
   useCreateApplicationMutation,
+  useUpdateApplicationMutation,
+  useUpdateApplicationInfoMutation,
   useGetDeveloperApplicationsQuery,
-  useGetApplicationByIdForDeveloperQuery,
+  useGetApplicationByIdQuery,
   useGetAppVersionsQuery,
   useCreateVersionMutation,
+  useSendVersionForReviewMutation,
+  useSetActiveVersionMutation,
+  useGetAppReviewsQuery,
+  useCreateReviewMutation,
+  useLazyGetFileSignatureQuery
 } = api;

@@ -1,7 +1,11 @@
 import { Header } from "@/components/header";
 import { Badge } from "@/components/ui/badge";
-import { useGetApplicationsQuery } from "@/lib/api/api";
-import { mockApplications, mockApplications2, mockCategories } from "@/lib/mocks";
+import { useGetApplicationsQuery, useGetCategoriesQuery } from "@/lib/api/api";
+import {
+  mockApplications,
+  mockApplications2,
+  mockCategories,
+} from "@/lib/mocks";
 import type { Application } from "@/types/application/application.type";
 import { DownloadIcon } from "lucide-react";
 import { useState } from "react";
@@ -54,8 +58,13 @@ const categoriesMock = [
 ];
 
 export const AppCard = ({ app }: { app: Application }) => {
+  const navigate = useNavigate();
+
   return (
-    <div className="flex border rounded-lg p-2  gap-4 align-center h-24 hover:bg-gray-50 transition-colors">
+    <div
+      className="flex border rounded-lg p-2  gap-4 align-center h-24 hover:bg-gray-50 transition-colors"
+      onClick={() => navigate(`/apps/${app.id}`)}
+    >
       <img
         src={app.iconMedia?.mediaUrl || mockIcon}
         alt={`${app.title} icon`}
@@ -87,6 +96,7 @@ export const AppCard = ({ app }: { app: Application }) => {
 };
 
 export const HomePage = () => {
+  const { data: categories } = useGetCategoriesQuery(undefined);
   const [selectedCategory, setSelectedCategory] = useState<number | undefined>(
     undefined
   );
@@ -104,6 +114,10 @@ export const HomePage = () => {
     }
   };
 
+  const onCategoryClick = (categoryId: number) => {
+    navigate(`/search?category=${categoryId}`);
+  };
+
   const { data: applications, isLoading } = useGetApplicationsQuery({});
 
   console.log(applications);
@@ -116,11 +130,9 @@ export const HomePage = () => {
           <div className="col-span-1 md:col-span-3 flex flex-col gap-6">
             <div>
               <h1 className="text-2xl font-bold">Вітаємо!</h1>
-              <p className="mb-4">
-                Перегляньте найновіші застосунки!
-              </p>
+              <p className="mb-4">Перегляньте найновіші застосунки!</p>
               <div className="flex flex-col gap-4">
-                {mockApplications?.map((app) => (
+                {applications?.map((app) => (
                   <AppCard
                     key={app.id}
                     app={app}
@@ -145,13 +157,14 @@ export const HomePage = () => {
           <div className="col-span-1 md:col-span-1 flex flex-col gap-4">
             <h1 className="text-2xl font-bold ">Категорії</h1>
             <div className="flex flex-wrap gap-2">
-              {mockCategories.map((category) => (
+              {categories?.map((category) => (
                 <Badge
                   key={category.id}
                   className="cursor-pointer"
                   variant="outline"
+                  onClick={() => onCategoryClick(category.id)}
                 >
-                  {category.name}
+                  {category.categoryName}
                 </Badge>
               ))}
             </div>

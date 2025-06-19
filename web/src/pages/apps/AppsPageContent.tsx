@@ -31,17 +31,9 @@ import {
 import { mockApplications } from "@/lib/mocks";
 import type { Application } from "@/types/application/application.type";
 
-import { type ColumnDef } from "@tanstack/react-table";
 import { DownloadIcon, MoreHorizontal, PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
-
-const appsMock = [
-  {
-    id: 1,
-    name: "App One",
-  },
-];
 
 const AppCard = ({
   app,
@@ -136,8 +128,8 @@ export const AppsPageContent = () => {
               <DialogHeader>
                 <DialogTitle>Створити новий застосунок</DialogTitle>
                 <DialogDescription>
-                  Введіть інформацію про застосунок.
-                  Ви зможете додати більше деталей пізніше.
+                  Введіть інформацію про застосунок. Ви зможете додати більше
+                  деталей пізніше.
                 </DialogDescription>
               </DialogHeader>
 
@@ -153,7 +145,7 @@ export const AppsPageContent = () => {
                   htmlFor="app-type"
                   className="mt-4"
                 >
-                 Вид застосунку
+                  Вид застосунку
                 </Label>
                 <Select
                   value={createAppData.type}
@@ -164,7 +156,9 @@ export const AppsPageContent = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="WEB">Вебзастосунок</SelectItem>
-                    <SelectItem value="DESKTOP">Завантажуваний застосунок</SelectItem>
+                    <SelectItem value="DESKTOP">
+                      Завантажуваний застосунок
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -180,7 +174,7 @@ export const AppsPageContent = () => {
         {developerApps?.length === 0 && !isLoadingApps ? (
           <div className="text-center text-gray-500">You have no apps yet.</div>
         ) : (
-          mockApplications.map((app) => (
+          developerApps?.map((app) => (
             <AppCard
               key={app.id}
               app={app}

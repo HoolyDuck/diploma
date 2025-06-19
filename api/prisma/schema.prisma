@@ -42,13 +42,14 @@ model Application {
   ApplicationReport ApplicationReport[]
   AppCategory       AppCategory[]
   AppMedia          AppMedia[]
+  AppDownload       AppDownload[]
 }
 
 model Version {
   id            Int           @id @default(autoincrement())
   applicationId Int
   versionName   String
-  fileId        String?       
+  fileId        String?
   status        VersionStatus @default(DRAFT)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
@@ -110,6 +111,16 @@ model AppMedia {
   media       Media       @relation(fields: [mediaId], references: [id])
 
   @@unique([applicationId, mediaId])
+}
+
+model AppDownload {
+  id            Int @id @default(autoincrement())
+  applicationId Int
+  userId        Int
+
+  application Application @relation(fields: [applicationId], references: [id])
+
+  @@unique([applicationId, userId])
 }
 
 enum ApplicationType {

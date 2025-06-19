@@ -7,6 +7,7 @@ import { ApplicationController } from './application.controller';
 import { MediaController } from './media.controller';
 import { VersionController } from './version.controller';
 import { FilesController } from './files.controller';
+import { CategoriesController } from './categories.controller';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { FilesController } from './files.controller';
     MediaController,
     VersionController,
     FilesController,
+    CategoriesController,
   ],
   providers: [ConfigService],
 })

@@ -14,8 +14,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { MultiSelect } from "@/components/ui/multi-select";
-import { mockCategories } from "@/lib/mocks";
+
 import { useState } from "react";
+import {
+  useGetApplicationByIdQuery,
+  useGetCategoriesQuery,
+  useUpdateApplicationInfoMutation,
+} from "@/lib/api/api";
+import { toast } from "sonner";
+import { useParams } from "react-router";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -27,18 +34,31 @@ type Props = {
   description?: string;
 };
 
-const categoryList = mockCategories.map((category) => {
-  return {
-    label: category.name,
-    value: category.id.toString(),
-  };
-});
-
 export const AppSettingsTextForm: React.FC<Props> = (props) => {
-  const [selectedCategories, setSelectedCategorires] = useState<string[]>([
-    "1", // Example category ID
-    "2", // Example category ID
-  ]);
+  const { appId } = useParams<{ appId: string }>();
+
+  const { data: appSettings } = useGetApplicationByIdQuery(Number(appId), {
+    skip: !appId,
+  });
+
+  const { data: categories } = useGetCategoriesQuery(undefined);
+
+  const categoryList =
+    categories?.map((category) => ({
+      label: category.categoryName,
+      value: category.id.toString(),
+    })) || [];
+
+  const appCategories = (appSettings?.AppCategory || []).map((category) =>
+    category.categoryId.toString()
+  );
+
+  console.log("App categories:", appCategories);
+
+  const [selectedCategories, setSelectedCategorires] =
+    useState<string[]>(appCategories);
+  const [updateApplicationInfoMutation, { isLoading: isUpdating }] =
+    useUpdateApplicationInfoMutation();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -49,7 +69,27 @@ export const AppSettingsTextForm: React.FC<Props> = (props) => {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+    const categories = selectedCategories.map((id) => ({
+      id: Number(id),
+    }));
+
+    updateApplicationInfoMutation({
+      id: Number(appId),
+      updateApplicationDto: {
+        title: values.title,
+        description: values.description,
+        categories,
+      },
+    })
+      .unwrap()
+      .then(() => {
+        toast.success("Інформацію про застосунок оновлено успішно!");
+      })
+      .catch(() => {
+        toast.error(
+          `Не вдалося оновити інформацію про застосунок. Cпробуйте ще раз пізніше.`
+        );
+      });
   }
   return (
     <Form {...form}>
@@ -99,6 +139,7 @@ export const AppSettingsTextForm: React.FC<Props> = (props) => {
 
               <FormControl>
                 <MultiSelect
+                  defaultValue={appCategories}
                   options={categoryList}
                   onValueChange={setSelectedCategorires}
                   value={selectedCategories}
@@ -113,7 +154,9 @@ export const AppSettingsTextForm: React.FC<Props> = (props) => {
           Введіть інформацію про застосунок, яка буде відображатися
           користувачам.
         </FormDescription>
-        <Button type="submit">Зберегти</Button>
+        <Button type="submit">
+          {isUpdating ? "Зберігаємо..." : "Зберегти"}
+        </Button>
       </form>
     </Form>
   );

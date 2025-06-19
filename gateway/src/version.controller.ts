@@ -4,6 +4,7 @@ import {
   Get,
   Inject,
   Param,
+  Patch,
   Post,
   UploadedFile,
   UseGuards,
@@ -40,20 +41,30 @@ export class VersionController {
     );
   }
 
-  @Post('uploadFile/:versionId')
+  @Patch('sendForReview/:versionId')
   @UseGuards(JwtGuard)
-  @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(
-    @UploadedFile('file') file: Express.Multer.File,
-    @Param('versionId') versionId: number,
-  ) {
-    const fileInfo = await firstValueFrom(
-      this.fileServiceClient.send('files.uploadFile', file),
-    );
+  async sendForReview(@Param('versionId') versionId: number) {
     return firstValueFrom(
       this.apiServiceClient.send('versions.update', {
         versionId,
-        updateData: { fileId: fileInfo.id },
+        updateData: { status: 'IN_REVIEW' },
+      }),
+    );
+  }
+
+  @Patch('setAsActive/:versionId')
+  @UseGuards(JwtGuard)
+  async setAsActive(
+    @Param('versionId') versionId: number,
+    @Body()
+    body: {
+      appId: number;
+    },
+  ) {
+    return firstValueFrom(
+      this.apiServiceClient.send('applications.update', {
+        id: +body.appId,
+        updateApplicationDto: { activeVersionId: +versionId },
       }),
     );
   }

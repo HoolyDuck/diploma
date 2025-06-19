@@ -1,5 +1,6 @@
 import {
   Controller,
+  Delete,
   Inject,
   Param,
   Post,
@@ -44,5 +45,39 @@ export class MediaController {
     );
 
     console.log('Icon uploaded successfully:', updateResult);
+    return updateResult;
+  }
+
+  @Post('uploadAppMedia/:applicationId')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadAppMedia(
+    @UploadedFile() file: Express.Multer.File,
+    @Param('applicationId') applicationId: number,
+  ) {
+    const result = await firstValueFrom(
+      this.apiServiceClient.send('media.uploadAppMedia', {
+        applicationId: +applicationId,
+        file,
+      }),
+    );
+
+    console.log('App media uploaded successfully:', result);
+    return result;
+  }
+
+  @Delete('deleteAppMedia/:applicationId/:mediaId')
+  async deleteAppMedia(
+    @Param('applicationId') applicationId: number,
+    @Param('mediaId') mediaId: number,
+  ) {
+    const result = await firstValueFrom(
+      this.apiServiceClient.send('media.deleteAppMedia', {
+        applicationId: +applicationId,
+        mediaId: +mediaId,
+      }),
+    );
+
+    console.log('App media deleted successfully:', result);
+    return result;
   }
 }

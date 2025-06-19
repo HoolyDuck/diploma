@@ -1,39 +1,22 @@
-import {
-  Controller,
-  Get,
-  Header,
-  Inject,
-  Param,
-  Res,
-  StreamableFile,
-} from '@nestjs/common';
+import { Controller, Get, Inject, UseGuards } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
-import { Response } from 'express';
-import { Readable } from 'stream';
+
+import { JwtGuard } from './guards/jwt.guard';
 
 @Controller('files')
 export class FilesController {
   constructor(@Inject('FILE_SERVICE') private fileServiceClient: ClientProxy) {}
 
-  @Get('download/:id')
-  async downloadFile(
-    @Param('id') id: string,
-    @Res({ passthrough: true }) res: Response,
-  ) {
-    const file = await firstValueFrom(
-      this.fileServiceClient.send('files.getFileById', id),
-    );
-
-    console.log('File retrieved:', file);
-
-    res.set({
-      'Content-Type': file.mimeType,
-      'Content-Disposition': `attachment; filename="${file.originalName}"`,
-    });
-
-    const fileStream = Readable.from(Buffer.from(file.buffer));
-
-    return new StreamableFile(fileStream);
+  @Get('generateFileSignature')
+  @UseGuards(JwtGuard)
+  async getFileSignature(): Promise<{
+    signature: string;
+  }> {
+    return {
+      signature: await firstValueFrom(
+        this.fileServiceClient.send('files.generateFileSignature', {}),
+      ),
+    };
   }
 }

@@ -43,7 +43,7 @@ export class AuthController {
 
     response.status(201).json({ accessToken, user });
   }
-
+ 
   @Post('login')
   async login(@Body() loginDto: LoginDto, @Res() response: Response) {
     const { accessToken, refreshToken, user } = await firstValueFrom(

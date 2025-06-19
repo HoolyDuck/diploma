@@ -13,11 +13,6 @@ export class ApplicationsController {
     return this.applicationService.findById(id);
   }
 
-  @MessagePattern('applications.findByIdForDeveloper')
-  async findByIdForDeveloper(id: number) {
-    return this.applicationService.findByIdForDeveloper(+id);
-  }
-
   @MessagePattern('applications.findMany')
   async findMany({
     skip,
@@ -46,11 +41,6 @@ export class ApplicationsController {
     return this.applicationService.findByDeveloperId(developerId);
   }
 
-  @MessagePattern('applications.getReviews')
-  async getReviews(applicationId: number) {
-    return this.applicationService.getReviews(applicationId);
-  }
-
   @MessagePattern('applications.create')
   async create(createApplicationDto: CreateApplicationDto) {
     return this.applicationService.createApplication(createApplicationDto);
@@ -65,5 +55,16 @@ export class ApplicationsController {
     updateApplicationDto: Prisma.ApplicationUpdateInput;
   }) {
     return this.applicationService.updateApplication(id, updateApplicationDto);
+  }
+
+  @MessagePattern('applications.updateCategories')
+  async updateCategories({
+    id,
+    categories,
+  }: {
+    id: number;
+    categories: { id: number }[];
+  }) {
+    return this.applicationService.updateAppCategories(id, categories);
   }
 }
