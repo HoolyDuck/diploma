@@ -32,11 +32,12 @@ model Application {
   updatedAt   DateTime           @updatedAt
   publishedAt DateTime?
   type        ApplicationType
-  status      ApplicationStatus?
+  status      ApplicationStatus? @default(DRAFT)
   websiteUrl  String?
+  downloads   Int? @default(0)
 
   versions          Version[]           @relation("ApplicationVersion")
-  activeVersion     Version?            @relation("ActiveVersion", fields: [activeVersionId], references: [id])
+  activeVersion     Version?            @relation("ActiveVersion", fields: [activeVersionId], references: [id], onDelete: SetNull)
   iconMedia         Media?              @relation(fields: [iconMediaId], references: [id])
   reviews           Review[]
   ApplicationReport ApplicationReport[]
@@ -54,7 +55,7 @@ model Version {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
-  application       Application  @relation("ApplicationVersion", fields: [applicationId], references: [id])
+  application       Application  @relation("ApplicationVersion", fields: [applicationId], references: [id], onDelete: Cascade)
   activeApplication Application? @relation("ActiveVersion")
 }
 
@@ -67,7 +68,7 @@ model Review {
   comment   String?
   createdAt DateTime @default(now())
 
-  application  Application    @relation(fields: [applicationId], references: [id])
+  application  Application    @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   ReviewReport ReviewReport[]
 }
 
@@ -88,7 +89,7 @@ model ApplicationReport {
   reason        String
   createdAt     DateTime @default(now())
 
-  application Application @relation(fields: [applicationId], references: [id])
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }
 
 model AppCategory {
@@ -96,7 +97,7 @@ model AppCategory {
   applicationId Int
   categoryId    Int
 
-  application Application @relation(fields: [applicationId], references: [id])
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   category    Category    @relation(fields: [categoryId], references: [id])
 
   @@unique([applicationId, categoryId])
@@ -107,7 +108,7 @@ model AppMedia {
   applicationId Int
   mediaId       Int
 
-  application Application @relation(fields: [applicationId], references: [id])
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   media       Media       @relation(fields: [mediaId], references: [id])
 
   @@unique([applicationId, mediaId])
@@ -118,7 +119,7 @@ model AppDownload {
   applicationId Int
   userId        Int
 
-  application Application @relation(fields: [applicationId], references: [id])
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
   @@unique([applicationId, userId])
 }

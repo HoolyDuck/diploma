@@ -6,6 +6,7 @@ import { AppCard } from "./HomePage";
 import { mockApplications, mockCategories } from "@/lib/mocks";
 import { number } from "zod";
 import { useState } from "react";
+import { CategorySelector } from "./components/CategorySelector";
 
 const categoriesMock = [
   {
@@ -24,10 +25,13 @@ const categoriesMock = [
 
 export const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
 
   const query = searchParams.get("query") || "";
   const category = searchParams.get("category");
+
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(
+    category ? Number(category) : null
+  );
 
   const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -38,9 +42,23 @@ export const SearchPage = () => {
   };
 
   const { data: applications, isLoading } = useGetApplicationsQuery({
-    search: query,
+    search: query || undefined,
     categoryId: category ? Number(category) : undefined,
   });
+
+  const onCategoryClick = (categoryId: number) => {
+    if (selectedCategory === categoryId) {
+      setSelectedCategory(null);
+      setSearchParams({ query });
+      return;
+    }
+    setSelectedCategory(categoryId);
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      params.set("category", String(categoryId));
+      return params;
+    });
+  };
 
   return (
     <>
@@ -54,7 +72,7 @@ export const SearchPage = () => {
                 <span className="text-blue-500">{query}</span>
               </h1>
               <div className="flex flex-col gap-4">
-                {mockApplications.slice(0, 1)?.map((app) => (
+                {applications?.map((app) => (
                   <AppCard
                     key={app.id}
                     app={app}
@@ -63,25 +81,10 @@ export const SearchPage = () => {
               </div>
             </div>
           </div>
-          <div className="col-span-1 md:col-span-1 flex flex-col gap-4">
-            <h1 className="text-2xl font-bold ">Категорії</h1>
-            <div className="flex flex-wrap gap-2">
-              {mockCategories.map((category) => (
-                <Badge
-                  key={category.id}
-                  className="cursor-pointer"
-                  variant={
-                    selectedCategory === category.id ? "default" : "outline"
-                  }
-                  onClick={() => {
-                    setSelectedCategory(category.id);
-                  }}
-                >
-                  {category.name}
-                </Badge>
-              ))}
-            </div>
-          </div>
+          <CategorySelector
+            selectedCategory={selectedCategory}
+            onCategoryClick={onCategoryClick}
+          />
         </div>
       </div>
     </>

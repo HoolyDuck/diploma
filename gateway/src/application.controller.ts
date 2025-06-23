@@ -65,6 +65,7 @@ export class ApplicationController {
       search,
       sortBy,
       sortOrder,
+      categoryId,
     });
     const result = await firstValueFrom(
       this.apiServiceClient.send('applications.findMany', {
@@ -73,10 +74,22 @@ export class ApplicationController {
         search,
         sortBy,
         sortOrder,
+        categoryId,
       }),
     );
 
     return result;
+  }
+
+  @Get('findPopular')
+  async findPopular(@Query('take') take: string, @Query('skip') skip: string) {
+    console.log('findPopular called with params:', { take, skip });
+    return firstValueFrom(
+      this.apiServiceClient.send('applications.findPopular', {
+        take: +take || 10,
+        skip: +skip || 0,
+      }),
+    );
   }
 
   @Post('')
@@ -155,6 +168,20 @@ export class ApplicationController {
           title: updateApplicationDto.title,
           description: updateApplicationDto.description,
         },
+      }),
+    );
+  }
+
+  @Patch('createAppDownload/:id')
+  @UseGuards(JwtGuard)
+  async createAppDownload(
+    @Param('id') id: number,
+    @GetUser() user: { id: number },
+  ) {
+    return firstValueFrom(
+      this.apiServiceClient.send('applications.createAppDownload', {
+        applicationId: +id,
+        userId: user.id,
       }),
     );
   }

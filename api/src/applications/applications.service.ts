@@ -51,21 +51,21 @@ export class ApplicationsService {
     sortOrder?: 'asc' | 'desc',
     categoryId?: number,
   ) {
-    const where: Prisma.ApplicationWhereInput = search
-      ? {
-          title: {
-            startsWith: search,
-            mode: 'insensitive',
+    const where: Prisma.ApplicationWhereInput = {
+      ...(search && {
+        title: {
+          contains: search,
+          mode: 'insensitive',
+        },
+      }),
+      ...(categoryId && {
+        AppCategory: {
+          some: {
+            categoryId,
           },
-          ...(categoryId && {
-            AppCategory: {
-              some: {
-                categoryId,
-              },
-            },
-          }),
-        }
-      : {};
+        },
+      }),
+    };
 
     const orderBy = sortBy
       ? {
@@ -82,6 +82,20 @@ export class ApplicationsService {
     });
 
     console.log('findMany', result);
+
+    return result.map(mapToApplicationDto);
+  }
+
+  async findPopular(take?: number, skip?: number) {
+    console.log('findPopular called with:', { take, skip });
+    const result = await this.prisma.application.findMany({
+      take,
+      skip,
+      orderBy: {
+        downloads: 'desc',
+      },
+      include: includeOptions,
+    });
 
     return result.map(mapToApplicationDto);
   }
@@ -143,13 +157,16 @@ export class ApplicationsService {
   }
 
   async createAppDownload(applicationId: number, userId: number) {
-    const newAppDownload = await this.prisma.appDownload.create({
-      data: {
-        applicationId,
-        userId,
-      },
+    const app = await this.prisma.application.findUnique({
+      where: { id: applicationId },
     });
 
-    return newAppDownload;
+    return await this.prisma.application.update({
+      where: { id: applicationId },
+      data: {
+        downloads: app.downloads + 1,
+      },
+      include: includeOptions,
+    });
   }
 }

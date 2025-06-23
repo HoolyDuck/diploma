@@ -20,12 +20,14 @@ export class ApplicationsController {
     search,
     sortBy,
     sortOrder,
+    categoryId,
   }: {
     skip?: number;
     take?: number;
     search?: string;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
+    categoryId?: number;
   }) {
     return this.applicationService.findMany(
       skip,
@@ -33,7 +35,13 @@ export class ApplicationsController {
       search,
       sortBy,
       sortOrder,
+      +categoryId,
     );
+  }
+
+  @MessagePattern('applications.findPopular')
+  async findPopular({ take, skip }: { take?: number; skip?: number }) {
+    return this.applicationService.findPopular(take, skip);
   }
 
   @MessagePattern('applications.findByDeveloperId')
@@ -66,5 +74,16 @@ export class ApplicationsController {
     categories: { id: number }[];
   }) {
     return this.applicationService.updateAppCategories(id, categories);
+  }
+
+  @MessagePattern('applications.createAppDownload')
+  async createAppDownload({
+    applicationId,
+    userId,
+  }: {
+    applicationId: number;
+    userId: number;
+  }) {
+    return this.applicationService.createAppDownload(applicationId, userId);
   }
 }

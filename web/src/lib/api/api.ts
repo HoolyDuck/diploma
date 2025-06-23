@@ -62,6 +62,7 @@ export const api = createApi({
   tagTypes: [
     "User",
     "Applications",
+    "PopularApplications",
     "DeveloperApplications",
     "DeveloperApplicationById",
     "Versions",
@@ -118,6 +119,17 @@ export const api = createApi({
         },
       }),
       providesTags: ["Applications"],
+    }),
+    getPopularApplications: builder.query<
+      Application[],
+      { take?: number; skip?: number }
+    >({
+      query: ({ take = 10, skip = 0 }) => ({
+        url: "/application/findPopular",
+        method: "GET",
+        params: { take, skip },
+      }),
+      providesTags: ["PopularApplications"],
     }),
     getDeveloperApplications: builder.query({
       query: () => ({
@@ -208,6 +220,13 @@ export const api = createApi({
         method: "GET",
       }),
     }),
+    createAppDownload: builder.mutation({
+      query: ({ applicationId }) => ({
+        url: `/application/createAppDownload/${applicationId}`,
+        method: "PATCH",
+      }),
+      invalidatesTags: ["DeveloperApplicationById", "Applications"],
+    }),
   }),
 });
 
@@ -228,5 +247,7 @@ export const {
   useSetActiveVersionMutation,
   useGetAppReviewsQuery,
   useCreateReviewMutation,
-  useLazyGetFileSignatureQuery
+  useLazyGetFileSignatureQuery,
+  useGetPopularApplicationsQuery,
+  useCreateAppDownloadMutation,
 } = api;

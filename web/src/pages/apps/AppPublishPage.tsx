@@ -124,9 +124,11 @@ export const AppPublishPage = () => {
           Стан публікації:{" "}
           <span className="text-green-500 font-semibold">Опубліковано</span>
         </h2>
-        <div>
-          <Button>Перейти на сторінку застосунку</Button>
-        </div>
+        <a href={`/apps/${appId}`} target="_blank" rel="noopener noreferrer">
+          <Button>
+            Перейти на сторінку застосунку
+          </Button>
+        </a>
       </div>
     </div>
   );

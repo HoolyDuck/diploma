@@ -14,27 +14,36 @@ export const Header: React.FC<Props> = ({ onFormSubmit }) => {
 
   return (
     <header className="flex items-center justify-between p-4  border-b ">
-      <form
-        onSubmit={onFormSubmit}
-        className="flex items-center"
-      >
-        <Input
-          placeholder="Шукати..."
-          className="w-64 ml-4"
-          name="search"
-        />
-        <button
-          type="submit"
-          className="hidden"
+      <div className="flex items-center">
+        <Link to="/home" className="flex items-center">
+          <img
+            src="/logo.png"
+            alt="Logo"
+            className="h-10"
+          />
+        </Link>
+        <form
+          onSubmit={onFormSubmit}
+          className="flex items-center"
         >
-          Search
-        </button>
-      </form>
+          <Input
+            placeholder="Шукати..."
+            className="w-64 ml-4"
+            name="search"
+          />
+          <button
+            type="submit"
+            className="hidden"
+          >
+            Search
+          </button>
+        </form>
+      </div>
       {user ? (
         <div className="flex items-center text-black mr-4">
           <Avatar>
             <AvatarImage
-              src="https://avatars.githubusercontent.com/u/1?v=4"
+              src={`https://ui-avatars.com/api/?name=${user.username}&background=random`}
               alt="User Avatar"
             />
           </Avatar>

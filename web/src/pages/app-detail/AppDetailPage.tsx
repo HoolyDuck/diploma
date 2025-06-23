@@ -9,6 +9,7 @@ import { Header } from "@/components/header";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  useCreateAppDownloadMutation,
   useCreateReviewMutation,
   useGetApplicationByIdQuery,
   useGetApplicationsQuery,
@@ -56,6 +57,8 @@ export const AppDetailPage = () => {
     (recommendedApp) => recommendedApp.id !== app?.id
   );
 
+  const [createAppDownloadMutation] = useCreateAppDownloadMutation();
+
   const downloadApp = async () => {
     const fileId = app?.activeVersion?.fileId;
 
@@ -67,6 +70,16 @@ export const AppDetailPage = () => {
       }/files/download/${fileId}/${signature}`,
       "_blank"
     );
+
+    if (appId) {
+      try {
+        await createAppDownloadMutation({
+          applicationId: Number(appId),
+        }).unwrap();
+      } catch {
+        toast.error("Сталася помилка при завантаженні застосунку.");
+      }
+    }
   };
 
   const handleReviewSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -118,7 +131,7 @@ export const AppDetailPage = () => {
                       <div className="flex items-center gap-2 border-r pr-2 mr-2">
                         <DownloadIcon className="!size-4 text-gray-500" />
                         <span className="text-sm text-gray-600">
-                          {app.downloadsCount} завантажень
+                          {app.downloads} завантажень
                         </span>
                       </div>
                       <div className="flex items-center gap-2 ">
@@ -289,7 +302,7 @@ export const AppDetailPage = () => {
                   />
                   <div className="flex flex-col">
                     <h2 className="text-md font-semibold">{appMock.title}</h2>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 max-h-[4rem] text-ellipsis overflow-hidden">
                       {appMock.description}
                     </p>
                   </div>

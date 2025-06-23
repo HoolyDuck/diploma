@@ -182,7 +182,7 @@ const VersionCard: React.FC<{ version: typeof activeVersion }> = ({
               onClick={handleSetActiveVersion}
               disabled={isSettingActiveVersion}
             >
-              <Lock /> Встановити активною
+              Встановити активною
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -269,7 +269,12 @@ export const AppSettingsVersions = () => {
       <Separator />
       <h3 className="text-lg font-semibold">Активна версія</h3>
       {appSettings?.activeVersion && (
-        <VersionCard version={appSettings.activeVersion} />
+        <VersionCard
+          version={
+            versions?.find((v) => v.id === appSettings.activeVersion.id) ||
+            activeVersion
+          }
+        />
       )}
       <h3 className="text-lg font-semibold">Історія</h3>
       <ul className="space-y-2">

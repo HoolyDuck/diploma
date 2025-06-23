@@ -1,16 +1,13 @@
 import { Header } from "@/components/header";
 import { Badge } from "@/components/ui/badge";
-import { useGetApplicationsQuery, useGetCategoriesQuery } from "@/lib/api/api";
 import {
-  mockApplications,
-  mockApplications2,
-  mockCategories,
-} from "@/lib/mocks";
+  useGetApplicationsQuery,
+  useGetPopularApplicationsQuery,
+} from "@/lib/api/api";
 import type { Application } from "@/types/application/application.type";
 import { DownloadIcon } from "lucide-react";
-import { useState } from "react";
 import { useNavigate } from "react-router";
-import { useDebouncedCallback } from "use-debounce";
+import { CategorySelector } from "./components/CategorySelector";
 
 const mockIcon =
   "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSw-HhSyTMAbUk43GMiLfmGqSJm-Gc7qK9oPQ&s";
@@ -74,15 +71,15 @@ export const AppCard = ({ app }: { app: Application }) => {
       />
       <div className="flex flex-col">
         <h2 className="text-md font-semibold">{app.title}</h2>
-        <p className="text-sm text-gray-600">{app.description}</p>
+        <p className="text-sm text-gray-600 truncate max-w-md">{app.description}</p>
         <div className="flex items-center gap-2 mt-1">
-          {app.categories?.map((category, index) => (
+          {app.AppCategory?.map(({ category }, index) => (
             <Badge
               key={index}
               className="mt-1"
               variant="outline"
             >
-              {category.name}
+              {category.categoryName}
             </Badge>
           ))}
         </div>
@@ -96,11 +93,6 @@ export const AppCard = ({ app }: { app: Application }) => {
 };
 
 export const HomePage = () => {
-  const { data: categories } = useGetCategoriesQuery(undefined);
-  const [selectedCategory, setSelectedCategory] = useState<number | undefined>(
-    undefined
-  );
-
   const navigate = useNavigate();
 
   const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -119,6 +111,7 @@ export const HomePage = () => {
   };
 
   const { data: applications, isLoading } = useGetApplicationsQuery({});
+  const { data: popularApplication } = useGetPopularApplicationsQuery({});
 
   console.log(applications);
 
@@ -131,7 +124,7 @@ export const HomePage = () => {
             <div>
               <h1 className="text-2xl font-bold">Вітаємо!</h1>
               <p className="mb-4">Перегляньте найновіші застосунки!</p>
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-4 overflow-y-auto max-h-[70vh]">
                 {applications?.map((app) => (
                   <AppCard
                     key={app.id}
@@ -145,7 +138,7 @@ export const HomePage = () => {
               <h1 className="text-2xl font-bold mb-4">Популярні</h1>
 
               <div className="flex flex-col gap-4">
-                {mockApplications2?.map((app) => (
+                {popularApplication?.map((app) => (
                   <AppCard
                     key={app.id}
                     app={app}
@@ -154,21 +147,10 @@ export const HomePage = () => {
               </div>
             </div>
           </div>
-          <div className="col-span-1 md:col-span-1 flex flex-col gap-4">
-            <h1 className="text-2xl font-bold ">Категорії</h1>
-            <div className="flex flex-wrap gap-2">
-              {categories?.map((category) => (
-                <Badge
-                  key={category.id}
-                  className="cursor-pointer"
-                  variant="outline"
-                  onClick={() => onCategoryClick(category.id)}
-                >
-                  {category.categoryName}
-                </Badge>
-              ))}
-            </div>
-          </div>
+          <CategorySelector
+            //selectedCategory={selectedCategory}
+            onCategoryClick={onCategoryClick}
+          />
         </div>
       </div>
     </>
